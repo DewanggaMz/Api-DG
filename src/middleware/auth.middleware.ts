@@ -25,7 +25,6 @@ export const authMiddleware = async (
 					throw new ResponseError(403, "Forbidden")
 				}
 
-				// console.log(decoded)
 				if (typeof decoded === "object" && decoded.type === "auth") {
 					req.id = decoded.id
 				} else {

@@ -114,3 +114,42 @@ export class UserValidation {
 			}),
 	})
 }
+
+export class UserAdminValidation {
+	static readonly USERSQUERY: ZodType = z.object({
+		page: z
+			.string()
+			.regex(/^[0-9]+$/, {
+				message: "Page must be a number",
+			})
+			.default("1")
+			.transform((v) =>
+				Number(v) >= 10 ? 10 : Number(v) <= 0 ? 1 : Number(v)
+			),
+		limit: z
+			.string()
+			.regex(/^[0-9]+$/, {
+				message: "Limit must be a number",
+			})
+			.default("15")
+			.transform((v) =>
+				Number(v) >= 100 ? 100 : Number(v) <= 0 ? 1 : Number(v)
+			),
+		search: z.string().optional(),
+		sort_by: z
+			.string()
+			.regex(/^[^<>"'\/]*$/, {
+				message: "Sort must not contain special characters",
+			})
+			.optional(),
+		is_active: z.enum(["true", "false"]).optional(),
+		verified: z.enum(["true", "false"]).optional(),
+		start_id: z
+			.string()
+			.regex(/^[0-9]+$/, {
+				message: "Page must be a number",
+			})
+			.default("1")
+			.transform((v) => (Number(v) <= 0 ? 1 : Number(v))),
+	})
+}

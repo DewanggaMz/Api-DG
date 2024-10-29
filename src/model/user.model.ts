@@ -38,3 +38,14 @@ export function toUserResponse(user: {
 		token: user.token,
 	}
 }
+
+export type UserAdminQuery = {
+	page: string
+	limit: string
+	search: string
+	sort_by: string
+	order: string
+	start_id: number
+	is_active: string
+	verified: string
+}

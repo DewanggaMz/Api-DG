@@ -5,15 +5,16 @@ import { accessMiddleware } from "../middleware/acess.middleware"
 import { AuthController } from "../controllers/auth.controller"
 import { Utils } from "../utils/utils"
 import { authMiddleware } from "../middleware/auth.middleware"
+import { crfsTokenMiddleware } from "../middleware/csrf.middleware"
 export const publicRouter = express.Router()
 
-publicRouter.post("/api/user/register", UserController.register)
-publicRouter.post("/api/user/login", UserController.login)
-publicRouter.get("/api/user", accessMiddleware, UserController.getUser)
-publicRouter.post("/api/user/logout", accessMiddleware, UserController.logout)
-
-publicRouter.get("/api/refresh", AuthController.refreshAccessToken) //butuh access midleware terlebih dahulu
-publicRouter.post("/api/otp", authMiddleware, AuthController.sendOTP)
+publicRouter.post(
+	"/api/user/register",
+	crfsTokenMiddleware,
+	UserController.register
+)
+publicRouter.post("/api/user/login", crfsTokenMiddleware, UserController.login)
+publicRouter.get("/api/csrf", AuthController.csrfToken)
 
 publicRouter.get("/test", (req: any, res) => {
 	// console.log(Utils.generateCSRFToken())

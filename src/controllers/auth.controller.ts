@@ -13,6 +13,17 @@ export class AuthController {
 		}
 	}
 
+	static async csrfToken(req: any, res: any, next: NextFunction) {
+		try {
+			const response = await AuthService.csrfToken(req)
+			res.status(200).json({
+				data: response,
+			})
+		} catch (err) {
+			next(err)
+		}
+	}
+
 	static async sendOTP(req: any, res: any, next: NextFunction) {
 		try {
 			const response = await AuthService.sendOTP(req)

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express"
 import { CreateUserRequest, LoginUserRequest } from "../model/user.model"
-import { UserService } from "../services/user.service"
+import { UserService, UserAdminService } from "../services/user.service"
 import { ResponseError } from "../error/response-error"
 import { prismaClient } from "../application/database"
 import { RequestIdToken } from "../types"
@@ -71,6 +71,23 @@ export class UserController {
 	static async getUser(req: RequestIdToken, res: Response, next: NextFunction) {
 		try {
 			const response = await UserService.getUser(req)
+			res.status(200).json({
+				data: response,
+			})
+		} catch (err) {
+			next(err)
+		}
+	}
+}
+
+export class UserAdminController {
+	static async getAllUsers(
+		req: RequestIdToken,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			const response = await UserAdminService.getAllUsers(req)
 			res.status(200).json({
 				data: response,
 			})

@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express"
 import { ResponseError } from "../error/response-error"
 import { prismaClient } from "../application/database"
 import jwt from "jsonwebtoken"
+import { Validation } from "../validation/validation"
+import { UserValidation } from "../validation/user.validation"
 
 export const crfsTokenMiddleware = async (
 	req: Request,
@@ -9,27 +11,34 @@ export const crfsTokenMiddleware = async (
 	next: NextFunction
 ) => {
 	try {
-		const requestCSRFToken = req.get("x-token")
-		if (!requestCSRFToken) {
+		const UserRequest = Validation.validate(UserValidation.LOGIN, req.body)
+		const token = UserRequest.token
+		if (!token) {
 			throw new ResponseError(401, "Unauthorized")
 		}
 
-		const token = jwt.verify(
-			requestCSRFToken,
-			process.env.JWT_SECRET_KEY as string
-		)
+		const csrfToken = await prismaClient.csrfToken.findUnique({
+			where: {
+				token: token,
+			},
+		})
+		if (!csrfToken) {
+			throw new ResponseError(401, "Unauthorized")
+		}
+		if (csrfToken.expiresIn < new Date()) {
+			await prismaClient.csrfToken.delete({
+				where: {
+					token: token,
+				},
+			})
+			throw new ResponseError(401, "Unauthorized")
+		}
 
-		console.log(token)
-
-		// const { count } = await prismaClient.csrfToken.deleteMany({
-		// 	where: {
-		// 		token: requestCSRFToken,
-		// 	},
-		// })
-
-		// if (!(count > 0)) {
-		// 	throw new ResponseError(401, "Unauthorized")
-		// }
+		await prismaClient.csrfToken.delete({
+			where: {
+				token: token,
+			},
+		})
 
 		next()
 	} catch (error) {

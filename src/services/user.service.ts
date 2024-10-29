@@ -4,15 +4,17 @@ import {
 	CreateUserRequest,
 	LoginUserRequest,
 	toUserResponse,
+	UserAdminQuery,
 	UserResponse,
 } from "../model/user.model"
 import { RequestIdToken } from "../types"
 import { Utils } from "../utils/utils"
-import { UserValidation } from "../validation/user.validation"
+import {
+	UserValidation,
+	UserAdminValidation,
+} from "../validation/user.validation"
 import { Validation } from "../validation/validation"
 import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import parser from "ua-parser-js"
 
 export class UserService {
 	static async register(request: CreateUserRequest): Promise<UserResponse> {
@@ -95,20 +97,20 @@ export class UserService {
 				},
 				"2m"
 			)
-
 			return { token: authorizationToken }
 		}
 
-		const acessToken = Utils.generateAccessToken({ id: user.id }, "2m")
 		const expiresIn = loginRequest.remember ? 30 : 7
-		const token = Utils.generateToken()
+		const { token, tokenPrefix } = Utils.generateTokenWithPrefix(40)
+		const userAgent = Utils.userAgent(request)
+
+		const acessToken = Utils.generateAccessToken({ id: user.id }, "2m")
+
 		const refreshToken = Utils.generateRefreshToken(
-			{ token: token },
+			{ token: tokenPrefix },
 			`${expiresIn}d`
 		)
 
-		const userAgent = Utils.userAgent(request)
-		console.log(userAgent)
 		await prismaClient.refreshToken.create({
 			data: {
 				userId: user.id,
@@ -156,5 +158,66 @@ export class UserService {
 				createdAt: true,
 			},
 		})
+	}
+}
+
+export class UserAdminService {
+	static async getAllUsers(req: any) {
+		const userRequest = Validation.validate(
+			UserAdminValidation.USERSQUERY,
+			req.query
+		)
+		console.log(req.query)
+		console.log(userRequest)
+		const searchQuery: any = {}
+		if (userRequest.start_id) {
+			searchQuery.id = { gte: userRequest.start_id }
+		}
+
+		if (userRequest.is_active !== undefined) {
+			searchQuery.isActive = userRequest.is_active === "true" ? true : false
+		}
+
+		if (userRequest.search) {
+			const searchValue = userRequest.search
+			searchQuery.OR = [
+				{ phone: { contains: searchValue, mode: "insensitive" } },
+				{ email: { contains: searchValue, mode: "insensitive" } },
+				{ username: { contains: searchValue, mode: "insensitive" } },
+				{ fullname: { contains: searchValue, mode: "insensitive" } },
+			]
+		}
+
+		const orderBy: any[] = []
+		if (userRequest.sort_by) {
+			const sortFields = userRequest.sort_by.split(",")
+			sortFields.forEach((field: string) => {
+				const [key, order] = field.split(":")
+				orderBy.push({ [key]: order || "asc" })
+			})
+		}
+
+		console.log(orderBy)
+
+		const users = await prismaClient.user.findMany({
+			where: searchQuery,
+			skip: userRequest.page * userRequest.limit - userRequest.limit,
+			take: userRequest.limit,
+			orderBy: orderBy,
+			select: {
+				id: true,
+				username: true,
+				fullname: true,
+				phone: true,
+				email: true,
+				isActive: true,
+				verified: true,
+				balance: true,
+				createdAt: true,
+			},
+		})
+
+		// console.log(users)
+		return users
 	}
 }

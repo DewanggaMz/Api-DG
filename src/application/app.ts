@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser"
 import { publicRouter } from "../routers/public-api"
 import { errorMiddleware } from "../middleware/error.middleware"
 import { prismaClient } from "./database"
+import { authRouter } from "../routers/auth-api"
 
 export const app = express()
 app.use(cookieParser())
@@ -74,6 +75,7 @@ app.use(
 app.use(express.json())
 
 app.use(publicRouter)
+app.use(authRouter)
 app.use(errorMiddleware)
 
 app.listen(4000, () => console.log("Server running on port 3000"))
