@@ -7,8 +7,8 @@ export class Validation {
 		return schema.parse(data)
 	}
 
-	static validatePhoneNumber(phoneNumber: string, countyCode: string) {
-		const fullPhoneNumber = `${countyCode}${phoneNumber}`
+	static validatePhoneNumber(phoneNumber: string) {
+		const fullPhoneNumber = `+${phoneNumber}`
 		const parsedPhoneNumber = parsePhoneNumberFromString(fullPhoneNumber)
 
 		if (!parsedPhoneNumber?.isValid()) {

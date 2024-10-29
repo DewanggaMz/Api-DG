@@ -23,21 +23,17 @@ export class UserService {
 			request
 		)
 
-		if (registerRequest.phoneNumber && registerRequest.countryCode) {
-			const phoneNumber = Validation.validatePhoneNumber(
-				registerRequest.phoneNumber,
-				registerRequest.countryCode
+		if (registerRequest.phoneNumber) {
+			registerRequest.phoneNumber = Validation.validatePhoneNumber(
+				registerRequest.phoneNumber
 			)
-			registerRequest.phoneNumber = phoneNumber
 		}
 
-		const totalUserWithSameEmail = await prismaClient.user.count({
-			where: {
-				email: registerRequest.email,
-			},
+		const isEmailTaken = await prismaClient.user.count({
+			where: { email: registerRequest.email },
 		})
 
-		if (totalUserWithSameEmail != 0) {
+		if (isEmailTaken) {
 			throw new ResponseError(400, "Email already in use")
 		}
 
@@ -51,16 +47,11 @@ export class UserService {
 				email: registerRequest.email,
 				password: registerRequest.password,
 			},
-			select: {
-				id: true,
-			},
+			select: { id: true },
 		})
 
 		const authorizationToken = Utils.generateAuthorizationToken(
-			{
-				id: user.id,
-				type: "auth",
-			},
+			{ id: user.id, type: "auth" },
 			"2m"
 		)
 
@@ -216,8 +207,6 @@ export class UserAdminService {
 				createdAt: true,
 			},
 		})
-
-		// console.log(users)
 		return users
 	}
 }
